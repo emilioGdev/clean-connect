@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Faxineiro {
+  id                       Int                   @id @default(autoincrement())
+  nome                     String
+  email                    String                @unique
+  senha                    String
+  telefone                 String?
+  experiencia              String?
+  disponibilidade          String?
+  area_atuacao             String?
+  created_at               DateTime              @default(now())
+  updated_at               DateTime              @updatedAt
+  postagens                Postagem[]
+  contratosSolicitados     SolicitacaoContrato[] @relation("SolicitanteContrato")
+  contratosComoContratante Contrato[]            @relation("ContratanteContrato")
+  contratosComoResponsavel Contrato[]            @relation("ResponsavelContrato")
+  contratosResponsavel     SolicitacaoContrato[] @relation("ResponsavelContrato")
+}
+
+model Postagem {
+  id                        Int                   @id @default(autoincrement())
+  titulo                    String
+  descricao                 String
+  preco                     Float
+  horarios                  String
+  cep                       String
+  logradouro                String
+  localidade                String
+  bairro                    String
+  uf                        String
+  complemento               String
+  faxineiro                 Faxineiro             @relation(fields: [faxineiroId], references: [id])
+  faxineiroId               Int
+  tipoServicoRelacionamento TipoDeServico         @relation(fields: [tipoServicoId], references: [id])
+  tipoServicoId             Int
+  contratos                 Contrato[]
+  SolicitacaoContrato       SolicitacaoContrato[]
+}
+
+model Fornecedor {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  email String @unique
+  lojas Loja[]
+  senha String
+}
+
+model Loja {
+  id           Int         @id @default(autoincrement())
+  nome         String
+  endereco     String
+  contato      String
+  fornecedorId Int?
+  fornecedor   Fornecedor? @relation(fields: [fornecedorId], references: [id])
+  produtos     Produto[]
+}
+
+model Produto {
+  id        Int    @id @default(autoincrement())
+  nome      String
+  descricao String
+  preco     Float
+  lojaId    Int
+  loja      Loja   @relation(fields: [lojaId], references: [id])
+}
+
+model TipoDeServico {
+  id          Int        @id @default(autoincrement())
+  nomeServico String     @unique
+  postagens   Postagem[]
+
+  @@map("tipos_de_servico")
+}
+
+model SolicitacaoContrato {
+  id            Int       @id @default(autoincrement())
+  contratante   Faxineiro @relation("SolicitanteContrato", fields: [contratanteId], references: [id])
+  contratanteId Int
+  responsavel   Faxineiro @relation("ResponsavelContrato", fields: [responsavelId], references: [id])
+  responsavelId Int
+  postagem      Postagem  @relation(fields: [postagemId], references: [id])
+  postagemId    Int
+  status        String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  contrato      Contrato? @relation(fields: [contratoId], references: [id])
+  contratoId    Int?
+}
+
+model Contrato {
+  id                  Int                   @id @default(autoincrement())
+  contratante         Faxineiro             @relation("ContratanteContrato", fields: [contratanteId], references: [id])
+  contratanteId       Int
+  responsavel         Faxineiro             @relation("ResponsavelContrato", fields: [responsavelId], references: [id])
+  responsavelId       Int
+  postagem            Postagem              @relation(fields: [postagemId], references: [id])
+  postagemId          Int
+  SolicitacaoContrato SolicitacaoContrato[]
+  status              String
+}
